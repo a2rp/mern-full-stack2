@@ -1,0 +1,22 @@
+.container {
+    background-color: #333;
+    color: #fff;
+    height: 60px;
+
+    display: flex;
+    align-items: center;
+
+    .navlink {
+        // border: 1px solid #0f0;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        color: #fff;
+        padding: 15px;
+        text-decoration: none;
+    }
+
+    .logout {
+        color: #ff4500;
+    }
+}

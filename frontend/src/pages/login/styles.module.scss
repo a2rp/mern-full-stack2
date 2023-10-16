@@ -1,0 +1,49 @@
+.container {
+    padding: 15px;
+
+    .heading {
+        font-size: 20px;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+        padding-left: 15px;
+        height: 30px;
+        width: 300px;
+        display: block;
+        margin-top: 15px;
+    }
+
+    input[type="button"] {
+        padding: 5px;
+        padding-left: 15px;
+        padding-right: 15px;
+        margin-top: 15px;
+    }
+
+    .heading {
+        margin-top: 30px;
+    }
+
+    .table {
+        width: 100%;
+
+        thead {
+            tr {
+                th {
+                    padding: 15px;
+                    background-color: #333;
+                    color: #fff;
+                }
+            }
+        }
+        tbody {
+            tr {
+                td {
+                    text-align: center;
+                    padding: 5px;
+                }
+            }
+        }
+    }
+}
