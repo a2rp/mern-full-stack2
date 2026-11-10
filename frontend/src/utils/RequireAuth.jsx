@@ -1,17 +1,10 @@
-import React from 'react'
-import { useAuth } from '../utils/auth'
-import { Navigate } from 'react-router-dom';
+import { Navigate } from "react-router-dom";
+import { useAuth } from "./auth";
 
 const RequireAuth = ({ children }) => {
-    const auth = useAuth();
-    auth.admin = window.localStorage.getItem('admin');
-    if (!auth?.admin) {
-        return <Navigate to="/login" />
-    } else {
-        // console.log(auth, "require auth");
-    }
-
-    return children
+    const { admin, status } = useAuth();
+    if (status === "checking") return <p role="status">Checking session…</p>;
+    return admin ? children : <Navigate to="/login" replace />;
 }
 
 export default RequireAuth

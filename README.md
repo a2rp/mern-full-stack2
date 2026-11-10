@@ -1,38 +1,77 @@
-![image](https://github.com/a2rp/mern-full-stack2/assets/5670738/71a0acff-9ebc-4182-ba06-00a14606bbd7)
+# MERN Full Stack 2
 
-![image](https://github.com/a2rp/mern-full-stack2/assets/5670738/42837fb8-22e6-4592-b38c-9a33f42b6290)
+An admin dashboard for managing contacts, built with React and a Firebase Cloud Function API backed by MongoDB.
 
-![image](https://github.com/a2rp/mern-full-stack2/assets/5670738/4f8dd708-4687-4c9d-aa6a-208be123cad9)
+## Features
 
-![image](https://github.com/a2rp/mern-full-stack2/assets/5670738/930421b9-59cc-49e6-b1fb-40c17ca60d31)
+- Admin registration protected by a private enrollment key
+- Password-hashed admin accounts and signed, HttpOnly session cookies
+- Server-verified sessions and authenticated user management routes
+- MongoDB-backed contact create, list, update, and delete operations
+- Server-side validation, duplicate checks, and safe API responses
+- Search and sort contacts in the dashboard
 
-![image](https://github.com/a2rp/mern-full-stack2/assets/5670738/51caf868-1fac-4ef6-ba38-20d428cb61cc)
+## Requirements
 
-![image](https://github.com/a2rp/mern-full-stack2/assets/5670738/07fc235b-a747-450f-be03-37b257e154e2)
+- Node.js 22
+- MongoDB (local or Atlas)
+- Firebase CLI for the Functions emulator or deployment
 
-![image](https://github.com/a2rp/mern-full-stack2/assets/5670738/f63365b9-5674-4ce1-90e2-560b2be239bb)
+## Local development
 
-![image](https://github.com/a2rp/mern-full-stack2/assets/5670738/eaf278f2-0b20-49a2-b687-3eb4422f983f)
+1. Start MongoDB and configure the backend environment:
 
-![image](https://github.com/a2rp/mern-full-stack2/assets/5670738/f9868740-a42d-40bc-abed-f35b1d82035d)
+       Copy-Item backend/functions/.env.example backend/functions/.env
 
-![image](https://github.com/a2rp/mern-full-stack2/assets/5670738/1807758a-bed2-4647-8ad1-02b2d45764c5)
+   Set TOKEN_KEY and ADMIN_REGISTRATION_KEY to separate random values, each at least 32 bytes.
 
+2. Start the Functions emulator from backend/functions:
 
+       npm install
+       npm run serve
 
+   The API will be available at http://localhost:5001/ashishranjan-net/asia-south1/api/v1.
 
-## Links
+3. Configure and start the React app:
 
-- Portfolio: [https://www.ashishranjan.net](https://www.ashishranjan.net)
-- GitHub: [https://github.com/a2rp](https://github.com/a2rp)
-- CodePen: [https://codepen.io/ash1198](https://codepen.io/ash1198)
-- LinkedIn: [https://www.linkedin.com/in/aashishranjan](https://www.linkedin.com/in/aashishranjan)
-- Facebook: [https://www.facebook.com/theash.ashish/](https://www.facebook.com/theash.ashish/)
-- YouTube: [https://www.youtube.com/@ashishranjan-ashz?sub_confirmation=1](https://www.youtube.com/@ashishranjan-ashz?sub_confirmation=1)
-- Email: [ash.ranjan09@gmail.com](mailto:ash.ranjan09@gmail.com)
+       Copy-Item frontend/.env.example frontend/.env.local
+       cd frontend
+       npm install
+       npm start
 
-## Support
+   Open http://localhost:3000. Use the admin enrollment key from the backend environment when creating the first admin account.
 
-- Support: [https://a2rp-donation-page.netlify.app/](https://a2rp-donation-page.netlify.app/)
-- Buy Me A Coffee: [https://buymeacoffee.com/a2rp](https://buymeacoffee.com/a2rp)
-- Patreon: [https://patreon.com/a2rp](https://patreon.com/a2rp)
+## Environment
+
+The Functions API reads these values from backend/functions/.env:
+
+- MONGODB_URI: MongoDB connection string. MONGODB_URL is also accepted for existing deployments.
+- TOKEN_KEY: secret used to sign admin session tokens.
+- ADMIN_REGISTRATION_KEY: secret required to create an admin account.
+- CLIENT_ORIGIN: comma-separated allowed frontend origins.
+- COOKIE_SAME_SITE: use strict locally. Production runs over HTTPS and uses none for the separately hosted frontend and API.
+
+Never commit .env files or share the enrollment key. The checked-in .env.example contains placeholders only.
+
+## API routes
+
+All routes are prefixed with /v1.
+
+- POST /admin/register: create an admin account; requires X-Admin-Registration-Key.
+- POST /admin/login: sign in and receive an HttpOnly session cookie.
+- POST /admin: verify the current session.
+- POST /admin/logout: clear the session cookie.
+- GET /user: list contacts for an authenticated admin session.
+- POST /user/add: create a contact.
+- PATCH /user/:id: update a contact.
+- DELETE /user/:id: delete a contact.
+
+## Deploying the Functions API
+
+The Firebase Functions configuration in backend/firebase.json targets the ashishranjan-net project, matching the API URL used by the frontend. Configure production environment values before deploying:
+
+    cd backend/functions
+    npm install
+    firebase deploy --only functions
+
+The project must meet Firebase's current runtime and billing requirements. The frontend Hosting project is configured separately under frontend/.

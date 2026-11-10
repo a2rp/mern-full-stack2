@@ -1,94 +1,43 @@
-import React from 'react'
+import React from "react";
 import { FaRegEdit } from "react-icons/fa";
 import { RiDeleteBin5Fill } from "react-icons/ri";
 
 const UsersTable = ({ users, displayData, displayUpdateSection, deleteUser }) => {
     const styles = {
-        usersSections: {
-            border: "1px solid #f00",
-        },
-        usersTable: {
-            width: "100%",
-            tableLayout: "fixed",
-            backgroundColor: "aliceblue"
-        },
-        thead: {
-            padding: "15px"
-        },
-        th: {
-            backgroundColor: "#333",
-            color: "#fff",
-            padding: "15px"
-        },
-        td: {
-            textAlign: "center",
-        },
-        editIcon: {
-            color: "#0f0",
-            fontSize: "30px"
-        },
-        deleteIcon: {
-            color: "orangered",
-            fontSize: "30px",
-            marginLeft: "30px",
-        },
-        buttonColumn: {
-            display: "flex",
-            justifyContent: "center",
-        }
+        section: { overflowX: "auto" },
+        table: { width: "100%", tableLayout: "fixed", backgroundColor: "aliceblue" },
+        th: { backgroundColor: "#333", color: "#fff", padding: "15px" },
+        td: { textAlign: "center", padding: "8px", overflowWrap: "anywhere" },
+        edit: { color: "blueviolet", fontSize: "25px", cursor: "pointer" },
+        remove: { color: "orangered", fontSize: "25px", cursor: "pointer", marginLeft: "20px" },
     };
+    const formatDate = (value) => value ? new Date(value).toLocaleString() : "";
 
     return (
-        <div>
-            <div style={styles.usersSections}>
-                <table style={styles.usersTable}>
-                    <thead style={styles.thead}>
-                        <tr style={styles.tr}>
-                            <th style={styles.th}>Name</th>
-                            <th style={styles.th}>Mobile</th>
-                            <th style={styles.th}>Email</th>
-                            <th style={styles.th}>Created At</th>
-                            <th style={styles.th}>Updated At</th>
-                            <th style={styles.th}>Action</th>
+        <div style={styles.section}>
+            <table style={styles.table}>
+                <thead><tr>
+                    <th style={styles.th}>Name</th><th style={styles.th}>Phone</th><th style={styles.th}>Email</th>
+                    <th style={styles.th}>Created</th><th style={styles.th}>Updated</th><th style={styles.th}>Actions</th>
+                </tr></thead>
+                <tbody>
+                    {users.map((user) => (
+                        <tr key={user._id}>
+                            <td style={styles.td} onClick={() => displayData(user)}>{user.name}</td>
+                            <td style={styles.td} onClick={() => displayData(user)}>{user.mobile}</td>
+                            <td style={styles.td} onClick={() => displayData(user)}>{user.email}</td>
+                            <td style={styles.td}>{formatDate(user.createdAt)}</td>
+                            <td style={styles.td}>{formatDate(user.updatedAt)}</td>
+                            <td style={styles.td}>
+                                <FaRegEdit style={styles.edit} onClick={() => displayUpdateSection(user)} title="Edit user" />
+                                <RiDeleteBin5Fill style={styles.remove} onClick={() => deleteUser(user._id)} title="Delete user" />
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        {users && users.map((user, index) => (
-                            <tr key={index}>
-                                <td style={styles.td} onClick={() => displayData(user.name, user.mobile, user.email)}>
-                                    {user.name}
-                                </td>
-                                <td style={styles.td} onClick={() => displayData(user.name, user.mobile, user.email)}>
-                                    {user.mobile}
-                                </td>
-                                <td style={styles.td} onClick={() => displayData(user.name, user.mobile, user.email)}>
-                                    {user.email}
-                                </td>
-                                <td style={styles.td} onClick={() => displayData(user.name, user.mobile, user.email)}>
-                                    {new Date(user.createdAt).toString()}
-                                </td>
-                                <td style={styles.td} onClick={() => displayData(user.name, user.mobile, user.email)}>
-                                    {new Date(user.updatedAt).toString()}
-                                </td>
-                                <td style={styles.buttonColumn}>
-                                    <div style={styles.editDeleteContainer}>
-                                        <FaRegEdit
-                                            style={styles.editIcon}
-                                            onClick={() => displayUpdateSection(user.id)}
-                                            title="EDIT" />
-                                        <RiDeleteBin5Fill
-                                            style={styles.deleteIcon}
-                                            onClick={() => deleteUser(user.id)}
-                                            title="DELETE" />
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                    ))}
+                </tbody>
+            </table>
         </div>
-    )
-}
+    );
+};
 
-export default UsersTable
+export default UsersTable;

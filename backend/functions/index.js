@@ -1,78 +1,72 @@
 require("dotenv").config();
 
-const functions = require("firebase-functions");
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
+const express = require("express");
 const slowDown = require("express-slow-down");
-
-
-const app = express();
-
+const functions = require("firebase-functions");
+const mongoose = require("mongoose");
 const adminRoutes = require("./src/routes/admin.routes");
 const userRoutes = require("./src/routes/user.routes");
 
-// middlewares
-const whitelist = [ // remove localhost from development
-    "https://gurukul-task.web.app",
-    "http://localhost",
-    "http://127.0.0.1",
-    "http://127.0.0.1:3000",
-    "http://localhost:3000"
-];
-const corsoptions = {
-    origin: (origin, callback) => {
-        if (whitelist.indexOf(origin) !== -1 || !origin) { // remove !origin from development
-            // if (whitelist.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            callback(new Error("Not allowed by CORS"));
-        }
+const app = express();
+const configuredOrigins = process.env.CLIENT_ORIGIN
+    || (process.env.NODE_ENV === "production" ? "https://gurukul-task.web.app" : "http://localhost:3000,http://127.0.0.1:3000");
+const allowedOrigins = configuredOrigins.split(",").map((origin) => origin.trim().replace(/\/+$/, "")).filter(Boolean);
+
+app.use(cors({
+    origin(origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error("Origin not allowed by CORS"));
     },
-    optionSuccessStatus: 200, // // some legacy browsers (IE11, various SmartTVs) choke on 204
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    optionsSuccessStatus: 204,
+    methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
-};
-app.use(cors(corsoptions));
-// app.use(cors());
-app.use(express.json());
+}));
+app.use(express.json({ limit: "20kb" }));
 app.use(cookieParser());
+app.use(slowDown({ windowMs: 15 * 60 * 1000, delayAfter: 20, delayMs: 500 }));
 
-app.use((req, res, next) => {
-    console.log(req.method, req.path);
-    next();
+app.get("/v1/health", (_req, res) => res.json({ success: true }));
+
+let databaseConnection;
+const connectDatabase = () => {
+    if (mongoose.connection.readyState === 1) return Promise.resolve();
+    if (mongoose.connection.readyState === 0) databaseConnection = null;
+    if (!databaseConnection) {
+        const mongoUri = process.env.MONGODB_URI || process.env.MONGODB_URL;
+        if (!mongoUri) return Promise.reject(new Error("MONGODB_URI is not configured."));
+        databaseConnection = mongoose.connect(mongoUri)
+            .then(() => console.log("MongoDB connected."))
+            .catch((error) => {
+                databaseConnection = null;
+                throw error;
+            });
+    }
+    return databaseConnection;
+};
+mongoose.connection.on("disconnected", () => { databaseConnection = null; });
+
+app.use("/v1", async (_req, res, next) => {
+    try {
+        await connectDatabase();
+        return next();
+    } catch (error) {
+        console.error("MongoDB connection unavailable:", error.name);
+        return res.status(503).json({ success: false, message: "The service is temporarily unavailable." });
+    }
 });
 
-
-
-// app.enable("trust proxy"); // only if you're behind a reverse proxy (Heroku, Bluemix, AWS if you use an ELB, custom Nginx setup, etc)
-
-const speedLimiter = slowDown({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    delayAfter: 20, // allow 20 requests per 15 minutes, then...
-    delayMs: 500 // begin adding 500ms of delay per request above 100:
-    // request # 101 is delayed by  500ms
-    // request # 102 is delayed by 1000ms
-    // request # 103 is delayed by 1500ms
-    // etc.
-});
-app.use(speedLimiter);
-
-
-// routes
 app.use("/v1/admin", adminRoutes);
 app.use("/v1/user", userRoutes);
-
-
-
-
-
-// connect to mongodb and then start server
-mongoose.connect(process.env.MONGODB_URL).then(() => {
-    console.log("MongoDB is  connected successfully");
-}).catch((err) => {
-    console.error(err);
+app.use((req, res) => res.status(404).json({ success: false, message: "Route not found." }));
+app.use((error, _req, res, next) => {
+    if (res.headersSent) return next(error);
+    if (error.type === "entity.parse.failed") return res.status(400).json({ success: false, message: "Request body must contain valid JSON." });
+    if (error.type === "entity.too.large") return res.status(413).json({ success: false, message: "Request body is too large." });
+    if (error.message === "Origin not allowed by CORS") return res.status(403).json({ success: false, message: "This origin is not allowed." });
+    console.error("Request failed:", error.name);
+    return res.status(500).json({ success: false, message: "Unable to process this request right now." });
 });
 
 exports.api = functions.region("asia-south1").https.onRequest(app);

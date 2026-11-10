@@ -1,117 +1,36 @@
-import { useState } from 'react';
+import { useState } from "react";
 import Swal from "sweetalert2";
 
 const AddUser = ({ onSave, hideAddUserForm }) => {
-    const [name, setName] = useState('');
-    const [mobile, setMobile] = useState('');
-    const [email, setEmail] = useState('');
+    const [user, setUser] = useState({ name: "", mobile: "", email: "" });
+    const [saving, setSaving] = useState(false);
 
-    const onSubmit = (event) => {
+    const onSubmit = async (event) => {
         event.preventDefault();
-
-        if (!name || !mobile || !email) {
-            return Swal.fire({
-                icon: 'error',
-                title: 'All fields required'
-            })
+        const details = {
+            name: user.name.trim(),
+            mobile: user.mobile.trim(),
+            email: user.email.trim().toLowerCase(),
+        };
+        if (details.name.length < 2 || details.mobile.length < 7 || !/^\+?\d{7,15}$/.test(details.mobile) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email)) {
+            await Swal.fire({ icon: "error", title: "Enter a valid name, email, and phone number." });
+            return;
         }
-
-        if (name.trim().length < 5 || !name.match("^[a-zA-Z ]*$")) {
-            return Swal.fire({
-                icon: "error",
-                title: "Invalid Name [only alphabets allowed, min 5 chars]"
-            });
-        }
-
-        if (mobile.trim().length < 10 || !mobile.match(/^[0-9]*$/)) {
-            return Swal.fire({
-                icon: "error",
-                title: "Invalid Phone Number [only numbers allowed, length > 10]"
-            });
-        }
-
-        onSave({
-            name,
-            mobile,
-            email
-        });
-
-        setName('');
-        setMobile('');
-        setEmail('');
-    }
+        setSaving(true);
+        const saved = await onSave(details);
+        if (saved) setUser({ name: "", mobile: "", email: "" });
+        setSaving(false);
+    };
 
     return (
         <form onSubmit={onSubmit} style={{ padding: "15px" }}>
-            <input
-                style={{
-                    display: "block",
-                    width: "100%",
-                    paddingLeft: "15px",
-                    height: "30px",
-                }}
-                type="text"
-                placeholder="Name"
-                value={name}
-                onChange={(event) => setName(event.target.value)} />
-
-            <input
-                style={{
-                    display: "block",
-                    width: "100%",
-                    paddingLeft: "15px",
-                    height: "30px",
-                    marginTop: "5px"
-                }}
-                type="text"
-                placeholder="Mobile"
-                value={mobile}
-                onChange={(event) => setMobile(event.target.value)} />
-
-            <input
-                style={{
-                    display: "block",
-                    width: "100%",
-                    paddingLeft: "15px",
-                    height: "30px",
-                    marginTop: "5px"
-                }}
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)} />
-
-            <input
-                style={{
-                    display: "inline-block",
-                    width: "48%",
-                    paddingLeft: "15px",
-                    height: "30px",
-                    marginTop: "5px",
-                    border: "none",
-                    backgroundColor: "green",
-                    color: "#fff"
-                }}
-                type="submit"
-                value="Save" />
-
-            <input
-                style={{
-                    display: "inline-block",
-                    float: "right",
-                    width: "48%",
-                    paddingLeft: "15px",
-                    height: "30px",
-                    marginTop: "5px",
-                    border: "none",
-                    backgroundColor: "orangered",
-                    color: "#fff"
-                }}
-                type="button"
-                value="Cancel"
-                onClick={hideAddUserForm} />
+            <input style={{ display: "block", width: "100%", paddingLeft: "15px", height: "30px" }} type="text" placeholder="Name" value={user.name} onChange={(event) => setUser({ ...user, name: event.target.value })} />
+            <input style={{ display: "block", width: "100%", paddingLeft: "15px", height: "30px", marginTop: "5px" }} type="tel" placeholder="Phone" value={user.mobile} onChange={(event) => setUser({ ...user, mobile: event.target.value })} />
+            <input style={{ display: "block", width: "100%", paddingLeft: "15px", height: "30px", marginTop: "5px" }} type="email" placeholder="Email" value={user.email} onChange={(event) => setUser({ ...user, email: event.target.value })} />
+            <button style={{ width: "48%", height: "30px", marginTop: "5px", backgroundColor: "green", color: "#fff" }} type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+            <button style={{ width: "48%", height: "30px", marginTop: "5px", float: "right", backgroundColor: "orangered", color: "#fff" }} type="button" onClick={hideAddUserForm}>Cancel</button>
         </form>
-    )
-}
+    );
+};
 
-export default AddUser
+export default AddUser;

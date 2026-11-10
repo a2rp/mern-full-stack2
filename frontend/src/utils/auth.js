@@ -1,25 +1,43 @@
-import { createContext, useContext, useState } from "react";
-import { useCookies } from "react-cookie";
+import { createContext, useContext, useEffect, useState } from "react";
+import api from "./api";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-    const [cookies, removeCookie] = useCookies([]);
     const [admin, setAdmin] = useState(null);
+    const [status, setStatus] = useState("checking");
 
-    const login = admin => {
-        console.log(admin);
-        setAdmin(admin);
+    useEffect(() => {
+        let active = true;
+        api.post("/admin", {})
+            .then(({ data }) => {
+                if (!active) return;
+                setAdmin(data.admin);
+                setStatus("authenticated");
+            })
+            .catch(() => {
+                if (!active) return;
+                setAdmin(null);
+                setStatus("anonymous");
+            });
+        return () => { active = false; };
+    }, []);
+
+    const login = (adminDetails) => {
+        setAdmin(adminDetails);
+        setStatus("authenticated");
     };
 
-    const logout = () => {
-        // cookies.remove('Token');
-        removeCookie("token");
-        window.localStorage.removeItem('admin');
-        setAdmin(null);
+    const logout = async () => {
+        try {
+            await api.post("/admin/logout");
+        } finally {
+            setAdmin(null);
+            setStatus("anonymous");
+        }
     };
 
-    return <AuthContext.Provider value={{ admin, login, logout }}>
+    return <AuthContext.Provider value={{ admin, status, login, logout }}>
         {children}
     </AuthContext.Provider>
 };
